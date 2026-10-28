@@ -59,7 +59,7 @@ var blobType = map[string]string{"x-ms-blob-type": "BlockBlob"}
 
 func (r *rig) stored() string {
 	r.t.Helper()
-	u, err := r.store.PresignGet("k/1", 60e9)
+	u, err := r.store.PresignGet(context.Background(), "k/1", 60e9)
 	if err != nil {
 		r.t.Fatal(err)
 	}
