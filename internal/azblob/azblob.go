@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,6 +37,9 @@ import (
 const (
 	// DefaultPartSize is the size of the parts the spool path cuts a blob into.
 	DefaultPartSize = 8 << 20
+	// staleSpool is how old another process's spool directory must be before
+	// NewSpoolDir treats it as left behind by a process that was killed.
+	staleSpool = 24 * time.Hour
 	// MaxRequestSize bounds one Put Block or Put Blob body. Azure allows more;
 	// the SDKs send blocks of 8 to 64 MiB and single shots of up to 128 MiB.
 	MaxRequestSize = 256 << 20
@@ -99,6 +103,28 @@ type Upload struct {
 	parts  map[int]blob.Part // direct: part number -> part
 	blocks map[string]int64  // spool: block id -> size
 	spool  string            // spool: the directory in use
+}
+
+// NewSpoolDir makes a private directory for a service to spool uploads in, and
+// returns it; the caller removes it when done. Uploads can be large (a Go build
+// cache is a gigabyte), so parent should be on the disk that holds the store,
+// not on a small /tmp: with "" it falls back to the system temporary directory.
+// Directories of this kind older than a day under parent are removed, which
+// are what a killed process leaves behind.
+func NewSpoolDir(parent, prefix string) (string, error) {
+	if parent != "" {
+		if err := os.MkdirAll(parent, 0o700); err != nil {
+			return "", err
+		}
+		entries, _ := os.ReadDir(parent)
+		for _, e := range entries {
+			if info, err := e.Info(); err == nil && e.IsDir() && strings.HasPrefix(e.Name(), prefix) &&
+				time.Since(info.ModTime()) > staleSpool {
+				os.RemoveAll(filepath.Join(parent, e.Name()))
+			}
+		}
+	}
+	return os.MkdirTemp(parent, prefix)
 }
 
 // New prepares an upload that will end up under key in store. spoolDir is
