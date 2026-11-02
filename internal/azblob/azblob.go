@@ -31,7 +31,7 @@ import (
 	"sync"
 	"time"
 
-	"raccoonci/internal/blob"
+	"github.com/Raccoon-CI/raccoonci/internal/blob"
 )
 
 const (
