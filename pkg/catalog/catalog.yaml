@@ -1,0 +1,344 @@
+# Raccoon CI's catalog of toolchains, tools, packages, actions, runner labels
+# and images.
+#
+# This is data, not code: supporting a new tool, setup action, version file
+# or runner image means editing this file. It is embedded in the binary as the
+# default. Raccoon CI can also pull a newer one from a URL (`raccoonci catalog
+# update`, -catalog-url), and `-catalog extra.yaml` overlays a local file.
+# Layers apply in that order, each on top of the one before: entries with the
+# same name replace, `name: null` removes, new ones are added, and lists given
+# at the top level replace the defaults. Every load is validated (unknown
+# keys, a command claimed twice, references to things that don't exist,
+# characters that don't belong in a package name), so a typo fails loudly
+# instead of silently missing demands.
+#
+# Because a catalog may come from the network, it only holds knowledge: names
+# that Raccoon CI looks up and installs through its own installers. It cannot
+# hold commands to run or download locations; those stay in Raccoon CI.
+
+# The format version. A catalog with a higher number needs a newer raccoonci
+# and is ignored (with a message) by older ones.
+schema: 1
+
+# The machines Raccoon CI runs jobs on (InstaBox: Debian 13).
+platform:
+  distro: Debian
+  version: "13"
+  codename: trixie
+
+# Which operating systems jobs can run on, and what to tell users when they
+# can't. This follows what the providers can offer: change it when, say,
+# Windows machines become available.
+operating-systems:
+  linux: {available: true}
+  windows:
+    available: false
+    unavailable: no Windows runner available yet; this job will fail unless you connect your own Windows machine
+  macos:
+    available: false
+    unavailable: no macOS runner available; this job will fail unless you connect your own Mac
+
+# runs-on labels (matched lower-cased) -> operating system. First match wins.
+runner-labels:
+  - {pattern: '^(linux|ubuntu(-.*)?)$', os: linux}
+  - {pattern: '^windows(-.*)?$', os: windows}
+  - {pattern: '^macos(-.*)?$', os: macos}
+
+# The GitHub-hosted runner images whose preinstalled software we track
+# (runner-images' names). label is the runs-on label, codename the Ubuntu
+# release (for messages), toolset the file in runner-images' toolsets/.
+images:
+  ubuntu22: {label: ubuntu-22.04, codename: jammy, toolset: toolset-2204.json}
+  ubuntu24: {label: ubuntu-24.04, codename: noble, toolset: toolset-2404.json}
+  ubuntu26: {label: ubuntu-26.04, codename: resolute, toolset: toolset-2604.json}
+
+# The moving label that runner-images' README says which image it currently
+# points to.
+image-alias: ubuntu-latest
+
+# runs.using of JavaScript actions -> the Node.js major version GitHub runs
+# them on. GitHub forces retired runtimes onto a newer one; when it moves
+# node20 actions to node24, change it here. Values not listed run on the
+# major in their name (node26 -> 26).
+runtimes:
+  node12: "20"
+  node16: "20"
+  node20: "20"
+  node24: "24"
+
+# Toolchains are installed into the toolcache, the way setup-* actions would.
+# installer picks one of Raccoon CI's built-in installers (a toolchain without
+# one is left to its setup action); toolcache is the directory name setup-*
+# actions look for (node, go, Python, ...), defaulting to the toolchain's name.
+toolchains:
+  node:
+    title: Node.js
+    installer: node
+    toolcache: node
+    commands: [node, npm, npx, corepack]
+    manifests: [package.json]
+    lockfiles: [package-lock.json, npm-shrinkwrap.json, yarn.lock, pnpm-lock.yaml, bun.lock, bun.lockb]
+    asdf: [nodejs, node]
+    probe: {command: node, args: [--version], pattern: '^v(\d+\.\d+\.\d+)'}
+    image:
+      default: {section: Language and Runtime, tool: Node.js}
+      cached: Node.js
+      required: true
+  python:
+    title: Python
+    # GitHub's own Python builds are for Ubuntu, and setup-python refuses to
+    # install them on Debian; this one is prefilled into the tool cache.
+    installer: python
+    toolcache: Python
+    commands: [python, python3, pip, pip3]
+    manifests: [pyproject.toml, requirements.txt, setup.py, Pipfile]
+    lockfiles: [uv.lock, poetry.lock, Pipfile.lock, pdm.lock]
+    asdf: [python]
+    # Python 3.1-3.3 are over a decade old: as YAML numbers these almost
+    # certainly lost a trailing zero (3.10 is read as 3.1, on GitHub too).
+    lossy-floats: ["3.1", "3.2", "3.3"]
+    image:
+      default: {section: Language and Runtime, tool: Python}
+      cached: Python
+      required: true
+  go:
+    title: Go
+    installer: go
+    toolcache: go
+    commands: [go, gofmt]
+    manifests: [go.mod]
+    lockfiles: [go.sum]
+    asdf: [golang, go]
+    probe: {command: go, args: [version], pattern: 'go version go(\d+\.\d+(?:\.\d+)?) '}
+    lossy-floats: ["1.1", "1.2", "1.3"]
+    image:
+      # The report doesn't say; the toolset's default pattern (1.24.*) is
+      # resolved against the cached versions.
+      default: {toolset: go}
+      cached: Go
+  java:
+    title: Java
+    # Temurin from Adoptium. setup-java downloads its own, so this is only for
+    # jobs that run java or mvn without setting it up.
+    installer: java
+    implicit-only: true
+    commands: [java, javac, jar]
+    manifests: [pom.xml, build.gradle, build.gradle.kts]
+    lockfiles: [gradle.lockfile]
+    asdf: [java]
+    image:
+      default: {section: Java, table-marker: (default)}
+  ruby:
+    title: Ruby
+    commands: [ruby, gem, bundle, bundler, rake]
+    manifests: [Gemfile]
+    lockfiles: [Gemfile.lock]
+    asdf: [ruby]
+    image:
+      default: {section: Language and Runtime, tool: Ruby}
+      cached: Ruby
+  rust:
+    title: Rust
+    # From static.rust-lang.org. rustup (what the setup actions use) installs
+    # its own, so this is only for jobs that run cargo without setting it up.
+    installer: rust
+    implicit-only: true
+    commands: [cargo, rustc, rustup, rustfmt]
+    manifests: [Cargo.toml]
+    lockfiles: [Cargo.lock]
+    asdf: [rust]
+    image:
+      default: {section: Rust Tools, tool: Rust}
+  dotnet:
+    title: .NET
+    commands: [dotnet]
+    asdf: [dotnet, dotnet-core]
+
+# Tools with their own installers. image is how the runner-images report
+# names the tool (lower case); a command is only an implicit demand when the
+# GitHub image really preinstalls it. requires names the toolchain it runs on.
+# commands defaults to the tool's name.
+tools:
+  docker: {image: docker client}
+  kubectl: {image: kubectl}
+  helm: {image: helm}
+  kind: {image: kind}
+  minikube: {image: minikube}
+  kustomize: {image: kustomize}
+  yq: {image: yq}
+  gh: {image: github cli}
+  aws: {image: aws cli}
+  az: {image: azure cli}
+  gcloud: {image: google cloud cli}
+  yarn: {image: yarn, requires: node}
+  lerna: {image: lerna, requires: node}
+  newman: {image: newman, requires: node}
+  pipx: {image: pipx, requires: python}
+  maven: {commands: [mvn], image: maven, requires: java}
+  gradle: {image: gradle, requires: java}
+  ant: {image: ant, requires: java}
+  bazel: {image: bazel}
+  bazelisk: {image: bazelisk}
+  cmake: {image: cmake}
+  ninja: {image: ninja}
+  ansible: {image: ansible}
+  packer: {image: packer}
+  pulumi: {image: pulumi}
+  podman: {image: podman}
+  buildah: {image: buildah}
+  skopeo: {image: skopeo}
+  conda: {image: miniconda}
+  powershell: {commands: [pwsh], image: powershell}
+  clang: {commands: [clang, clang++], image: clang}
+  kotlin: {commands: [kotlin, kotlinc], image: kotlin}
+  swift: {image: swift}
+  julia: {image: julia}
+  yamllint: {image: yamllint}
+  zstd: {image: zstd}
+
+# apt packages, by their Ubuntu name (as the runner-images report lists
+# them). debian is the package's name on Debian where it differs. commands
+# defaults to the package's name.
+packages:
+  jq: {}
+  make: {}
+  gcc: {commands: [gcc, cc]}
+  g++: {commands: [g++, c++]}
+  sqlite3: {}
+  zip: {}
+  unzip: {}
+  rsync: {}
+  wget: {}
+  curl: {}
+  xz-utils: {commands: [xz]}
+  bzip2: {}
+  p7zip-full: {commands: [7z, 7za]}
+  parallel: {}
+  shellcheck: {}
+  tree: {}
+  file: {}
+  patchelf: {}
+  pkg-config: {}
+  autoconf: {commands: [autoconf, autoreconf]}
+  automake: {}
+  libtool: {commands: [libtoolize]}
+  bison: {}
+  flex: {}
+  m4: {}
+  swig: {}
+  upx: {}
+  pigz: {}
+  lz4: {}
+  brotli: {}
+  dnsutils: {commands: [dig, nslookup], debian: bind9-dnsutils}
+  iproute2: {commands: [ip]}
+  iputils-ping: {commands: [ping]}
+  net-tools: {commands: [netstat, ifconfig]}
+  netcat: {commands: [nc], debian: netcat-openbsd}
+  telnet: {}
+  ftp: {}
+  rpm: {commands: [rpm, rpmbuild]}
+  fakeroot: {}
+  sshpass: {}
+  openssh-client: {commands: [ssh, scp, ssh-keygen]}
+  mercurial: {commands: [hg]}
+  xvfb: {commands: [xvfb-run]}
+  gnupg2: {commands: [gpg], debian: gnupg}
+  mediainfo: {}
+  aria2: {commands: [aria2c]}
+
+# Commands that run the command after them (sudo make -> make). Their own
+# -flags are skipped; skip-assignments also skips NAME=value words (env), and
+# skip-args that many leading positional arguments (timeout's duration).
+wrappers:
+  sudo: {}
+  env: {skip-assignments: true}
+  time: {}
+  nohup: {}
+  exec: {}
+  command: {}
+  nice: {}
+  timeout: {skip-args: 1}
+  xargs: {}
+  stdbuf: {}
+
+# Commands that install packages for the job itself: after one of the verbs,
+# the non-flag arguments are package names. Those packages are then not
+# installed for the job again.
+installers:
+  apt-get: {verbs: [install]}
+  apt: {verbs: [install]}
+
+# Things that work on GitHub's Ubuntu images but are likely to misbehave on
+# Raccoon CI's machines. message may use {platform}, {distro}, {codename},
+# {image-codename} and {arg} (the argument that matched arg-prefix).
+compat-warnings:
+  - commands: [lsb_release]
+    message: "lsb_release reports {distro}'s '{codename}' here, not Ubuntu's '{image-codename}' (Raccoon CI machines run {platform}), so apt sources or downloads built from it may not exist"
+  - commands: [add-apt-repository, apt-add-repository]
+    arg-prefix: "ppa:"
+    message: "adds the Ubuntu PPA {arg}; PPAs are built for Ubuntu and may not install on {platform}"
+
+# Build commands that hide which toolchains they use. When a job runs one,
+# the repo's manifests (go.mod, package.json, ...) decide.
+opaque: [make, just, task, mage, earthly, bash, sh]
+
+# What actions mean for a job's needs. Names are lower case, without @ref.
+#   setup: the toolchain it installs, and where it reads the version from
+#     (version-from-ref: the @ref is the version, unless it matches ref-ignore)
+#   provides: a tool it installs, so later steps using it need nothing
+#   needs-docker: it needs a Docker daemon
+#   checkout: it checks out the repository (so manifests can be read)
+actions:
+  actions/checkout: {checkout: true}
+  actions/setup-node: {setup: node, version-input: node-version, file-input: node-version-file}
+  actions/setup-python:
+    setup: python
+    version-input: python-version
+    file-input: python-version-file
+    default-files: [.python-version]
+  actions/setup-go: {setup: go, version-input: go-version, file-input: go-version-file}
+  actions/setup-java: {setup: java, version-input: java-version, file-input: java-version-file}
+  ruby/setup-ruby: {setup: ruby, version-input: ruby-version, default-files: [.ruby-version, .tool-versions]}
+  actions/setup-dotnet:
+    setup: dotnet
+    version-input: dotnet-version
+    file-input: global-json-file
+    default-files: [global.json]
+  # dtolnay/rust-toolchain@1.80.0: the ref names the version.
+  dtolnay/rust-toolchain: {setup: rust, version-input: toolchain, version-from-ref: true, ref-ignore: '^(v.*|master)$'}
+  actions-rs/toolchain: {setup: rust, version-input: toolchain}
+  pnpm/action-setup: {provides: pnpm}
+  oven-sh/setup-bun: {provides: bun}
+  denoland/setup-deno: {provides: deno}
+  astral-sh/setup-uv: {provides: uv}
+  gradle/actions/setup-gradle: {provides: gradle}
+  azure/setup-kubectl: {provides: kubectl}
+  azure/setup-helm: {provides: helm}
+  hashicorp/setup-terraform: {provides: terraform}
+  docker/setup-buildx-action: {needs-docker: true}
+  docker/setup-qemu-action: {needs-docker: true}
+  docker/build-push-action: {needs-docker: true}
+  docker/login-action: {needs-docker: true}
+
+# How to read a version file, by file name, the way the setup-* action that
+# reads it does. Files not listed use their first line that isn't a comment,
+# without a leading v (.nvmrc, .python-version, .ruby-version, ...).
+#   json: the first of these fields that is set
+#   go.mod: the toolchain directive, else the go directive
+#   tool-versions: the line for the toolchain's asdf names
+version-files:
+  package.json: {format: json, fields: [volta.node, engines.node]}
+  global.json: {format: json, fields: [sdk.version]}
+  go.mod: {format: go.mod}
+  .tool-versions: {format: tool-versions}
+
+# Sections of the runner-images software report whose tools count as
+# preinstalled software.
+image-software-sections:
+  - Language and Runtime
+  - Tools
+  - CLI Tools
+  - Package Management
+  - Project Management
+  - PowerShell Tools
