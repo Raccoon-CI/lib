@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/internal/archive"
+	"github.com/Raccoon-CI/raccoonci/pkg/archive"
 )
 
 // maxSource caps what the agent unpacks from the controller.
