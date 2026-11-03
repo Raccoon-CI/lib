@@ -43,6 +43,11 @@ type InstanceSpec struct {
 	// controller plans with, so that the machine does too. Empty: the one built
 	// into the machine's binary. An older machine ignores the field.
 	Images json.RawMessage `json:"images,omitempty"`
+	// Catalog is the catalog feed text (YAML, already verified by the
+	// controller) the controller plans with, laid over the machine's built-in
+	// catalog. A string because the feed is not JSON. Empty: the built-in one.
+	// An older machine ignores the field.
+	Catalog string `json:"catalog,omitempty"`
 }
 
 // Line is one line of the machine's output: an event, the final result, or
