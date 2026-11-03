@@ -14,6 +14,7 @@ Chinese version: [README.zh.md](README.zh.md).
 | `pkg/instabox` | the InstaBox API client and provider |
 | `pkg/blob`, `pkg/artifact`, `pkg/cache`, `pkg/archive` | the artifact and cache protocol services and their storage |
 | `pkg/affected` | which jobs the changed files concern |
+| `pkg/ghrunner`, `pkg/sched` | the GitHub-triggered path behind `raccoonci serve` (runs a job on a machine started for it), and which short job instances share a machine |
 | `internal/azblob`, `internal/twirp` | private helpers of `artifact` and `cache` |
 | `deploy/catalog-feed` | the **template of the [`Raccoon-CI/catalog`](https://github.com/Raccoon-CI/catalog) repository**, which publishes the signed catalog feed (`sign.sh`, the publish workflow, a starter `catalog.yaml`, READMEs). It is not Go code; changes are copied to that repository by hand. |
 

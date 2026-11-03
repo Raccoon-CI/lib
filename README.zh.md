@@ -14,6 +14,7 @@ English version: [README.md](README.md).
 | `pkg/instabox` | InstaBox 的 API 客户端和 provider |
 | `pkg/blob`、`pkg/artifact`、`pkg/cache`、`pkg/archive` | artifact 与 cache 的协议服务及其存储 |
 | `pkg/affected` | 改动的文件涉及哪些 job |
+| `pkg/ghrunner`、`pkg/sched` | `raccoonci serve` 背后由 GitHub 触发的路径(为 job 现起机器来跑),以及哪些短 job 实例共用一台机器 |
 | `internal/azblob`、`internal/twirp` | `artifact` 和 `cache` 的私有帮手 |
 | `deploy/catalog-feed` | **[`Raccoon-CI/catalog`](https://github.com/Raccoon-CI/catalog) 仓库的模板**,那个仓库发布签名的 catalog feed(`sign.sh`、发布工作流、起步的 `catalog.yaml`、中英文 README)。它不是 Go 代码,改动要手工同步到那个仓库。 |
 
