@@ -18,6 +18,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/Raccoon-CI/lib/pkg/catalog"
 	"github.com/Raccoon-CI/lib/pkg/trigger"
 )
 
@@ -35,17 +36,38 @@ const (
 	maxDirs     = 5000
 )
 
-// skipDirs are never searched for packages.
-var skipDirs = map[string]bool{".git": true, "node_modules": true, "vendor": true, "target": true, "dist": true, "build": true}
+// Kinds are the package kinds this package knows how to find. A toolchain's
+// `workspace-kind` in the catalog must be one of them (a test keeps the two in
+// step).
+var Kinds = []string{"go", "npm", "cargo"}
+
+// SkipDirs are the directory names package discovery does not enter: the
+// catalog's `skip-dirs` (installed, vendored or VCS data) and its
+// `build-output-dirs`. Pass the catalog in use, or catalog.Default() for the
+// built-in ones.
+func SkipDirs(cat *catalog.Catalog) []string {
+	return append(slices.Clone(cat.SkipDirs), cat.BuildOutputDirs...)
+}
 
 // Packages finds the workspace packages of the repository and their local
-// dependencies. A repository with no workspace has none (a lone Go module or
-// npm package at the root is not listed: it would be the whole repository).
+// dependencies, skipping the directories of the built-in catalog. A repository
+// with no workspace has none (a lone Go module or npm package at the root is
+// not listed: it would be the whole repository).
 func Packages(repo fs.FS) []Package {
+	return PackagesSkipping(repo, SkipDirs(catalog.Default()))
+}
+
+// PackagesSkipping is Packages with the directory names to skip given (see
+// SkipDirs).
+func PackagesSkipping(repo fs.FS, skipDirs []string) []Package {
+	skip := make(map[string]bool, len(skipDirs))
+	for _, d := range skipDirs {
+		skip[d] = true
+	}
 	var all []Package
 	all = append(all, goPackages(repo)...)
-	all = append(all, npmPackages(repo)...)
-	all = append(all, cargoPackages(repo)...)
+	all = append(all, npmPackages(repo, skip)...)
+	all = append(all, cargoPackages(repo, skip)...)
 	for i := range all {
 		slices.Sort(all[i].Deps)
 		all[i].Deps = slices.Compact(all[i].Deps)
@@ -77,14 +99,14 @@ func read(repo fs.FS, name string) ([]byte, bool) {
 
 // dirs lists the directories matching the workspace patterns (GitHub-style
 // globs, with ! to exclude, as pnpm and npm write them).
-func dirs(repo fs.FS, patterns []string) []string {
+func dirs(repo fs.FS, patterns []string, skip map[string]bool) []string {
 	var out []string
 	n := 0
 	fs.WalkDir(repo, ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || !d.IsDir() {
 			return nil
 		}
-		if skipDirs[d.Name()] && p != "." {
+		if skip[d.Name()] && p != "." {
 			return fs.SkipDir
 		}
 		if n++; n > maxDirs {
@@ -214,7 +236,7 @@ func parseGoMod(src string, replaces map[string]string) (module string, reqs []s
 
 // ---- npm, pnpm, yarn ----
 
-func npmPackages(repo fs.FS) []Package {
+func npmPackages(repo fs.FS, skip map[string]bool) []Package {
 	var patterns []string
 	if b, ok := read(repo, "package.json"); ok {
 		var root struct {
@@ -252,7 +274,7 @@ func npmPackages(repo fs.FS) []Package {
 	}
 	var pkgs []*pkg
 	byName := map[string]*pkg{}
-	for _, d := range dirs(repo, patterns) {
+	for _, d := range dirs(repo, patterns, skip) {
 		b, ok := read(repo, path.Join(d, "package.json"))
 		if !ok {
 			continue
@@ -290,7 +312,7 @@ func npmPackages(repo fs.FS) []Package {
 
 // ---- Cargo ----
 
-func cargoPackages(repo fs.FS) []Package {
+func cargoPackages(repo fs.FS, skip map[string]bool) []Package {
 	b, ok := read(repo, "Cargo.toml")
 	if !ok {
 		return nil
@@ -307,7 +329,7 @@ func cargoPackages(repo fs.FS) []Package {
 	}
 	var out []Package
 	byDir := map[string]bool{}
-	for _, d := range dirs(repo, patterns) {
+	for _, d := range dirs(repo, patterns, skip) {
 		if _, ok := read(repo, path.Join(d, "Cargo.toml")); ok {
 			byDir[d] = true
 		}

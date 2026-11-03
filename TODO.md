@@ -17,6 +17,7 @@
 - ✅ 库里的机制：`Source.PublicKeys`（多把公钥，任一验过即可，轮换时新旧同列）、`Status.Body`（验过的原文）、`ParsePublicKeys`、`GenerateKey`/`ParsePrivateKey`/`PublicKeyOf`/`Sign`、`ResolveFeed`；拉取只允许 https、有大小上限、ETag 条件请求、验过才写缓存、读缓存时重新验证。
 - ✅ `deploy/catalog-feed/` 保留在库里，它是 `Raccoon-CI/catalog` 仓库的**模板**（`sign.sh` 只用 openssl 签名并在写 `.sig` 前用客户端信任的公钥验过、`publish.yml`、起步的 `catalog.yaml`、中英文 README）。改模板后要手工同步到 catalog 仓库。
 - ⬜ 还剩：feed 目前只是起步的 `schema: 1`，里面还没有任何覆盖项；catalog 仓库没开分支保护时测过，保护开启后要放行 `github-actions[bot]`；`sign.sh` 没有自动测试。
+- ✅ 硬编码名单进 catalog（2026-11-03，`v0.3.0`、`v0.4.0`）：`skip-dirs`（扫描项目时不进入的目录）、工具链的 `workspace-kind`、`build-output-dirs`（`dist`、`build`，只有 `pkg/affected` 的包发现也跳过）。`envsnap` 和 `pkg/affected` 原来各带一份不一样的名单（`affected` 不跳 `.venv`/`venv`，`envsnap` 不跳 `dist`/`build`），现在都读 catalog；`affected.PackagesSkipping`、`Input.SkipDirs`、`affected.Kinds`（有测试保证 catalog 里的 `workspace-kind` 都是它认识的种类）。**没做**：`pkg/affected` 的 `defaultIgnore`（`**.md`、`LICENSE*`、`COPYING*`、`.gitignore`、`.editorconfig`：改了不影响绑定目录的 job 的文件）仍在 Go 里，用户可以用仓库的 `.raccoonci/affected.yml` 的 `ignore:` 补充，等有第二个使用者再搬进 catalog；runner 仓库的 `cliutil.Unaffected` 调 `affected.Decide` 时没传 `SkipDirs`，所以用的是内置 catalog 的名单，用户 overlay 的 `skip-dirs` 对 `raccoonci run -affected` 不生效（`raccoonci affected` 命令会传）。
 
 ## 2. 算力提供方里属于库的部分（原 C.2）
 

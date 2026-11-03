@@ -77,6 +77,9 @@ type Input struct {
 	Files  []string
 	Repo   fs.FS
 	Config *Config
+	// SkipDirs are the directory names package discovery does not enter (see
+	// SkipDirs); nil means the built-in catalog's.
+	SkipDirs []string
 }
 
 // Decide says, per job id, whether the changes concern it.
@@ -95,7 +98,12 @@ func Decide(in Input) map[string]Decision {
 	if cfg == nil {
 		cfg = &Config{}
 	}
-	pkgs := Packages(in.Repo)
+	var pkgs []Package
+	if in.SkipDirs != nil {
+		pkgs = PackagesSkipping(in.Repo, in.SkipDirs)
+	} else {
+		pkgs = Packages(in.Repo)
+	}
 
 	// What a change to each file means for all jobs at once.
 	for _, f := range in.Files {

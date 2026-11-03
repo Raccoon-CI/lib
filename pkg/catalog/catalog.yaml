@@ -290,6 +290,10 @@ opaque: [make, just, task, mage, earthly, bash, sh]
 # manifests and lockfiles) does not go into them.
 skip-dirs: [.git, node_modules, vendor, .venv, venv, target]
 
+# Directories that hold what a build produces. Finding a repository's workspace
+# packages skips them too; a scan for dependency manifests does not.
+build-output-dirs: [dist, build]
+
 # What actions mean for a job's needs. Names are lower case, without @ref.
 #   setup: the toolchain it installs, and where it reads the version from
 #     (version-from-ref: the @ref is the version, unless it matches ref-ignore)

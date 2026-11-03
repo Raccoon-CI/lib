@@ -69,6 +69,11 @@ type Catalog struct {
 	// rather than the project's own sources (node_modules, .git, ...). A walk
 	// that looks for a repository's projects does not enter them.
 	SkipDirs []string `yaml:"skip-dirs"`
+	// BuildOutputDirs are directory names that hold what a build produces
+	// (dist, build). Package discovery skips them as well as SkipDirs, but a
+	// scan for dependency manifests does not: a repository may keep real
+	// sources in a directory called build.
+	BuildOutputDirs []string `yaml:"build-output-dirs"`
 
 	commands map[string]Requirement
 }
@@ -324,6 +329,7 @@ func (c *Catalog) Overlay(src []byte) (*Catalog, error) {
 		Opaque:                pick(c.Opaque, o.Opaque),
 		ImageSoftwareSections: pick(c.ImageSoftwareSections, o.ImageSoftwareSections),
 		SkipDirs:              pick(c.SkipDirs, o.SkipDirs),
+		BuildOutputDirs:       pick(c.BuildOutputDirs, o.BuildOutputDirs),
 	}
 	if o.Platform != (Platform{}) {
 		out.Platform = o.Platform
@@ -448,11 +454,13 @@ func (c *Catalog) validate() error {
 		}
 	}
 
-	for _, d := range c.SkipDirs {
-		// A bare directory name, matched wherever it appears below the root;
-		// a path or ".." would make the walk skip or reach something else.
-		if d == "" || d == "." || d == ".." || strings.ContainsAny(d, "/\\") {
-			fail("skip-dirs: %q must be a directory name, without a path", d)
+	for key, list := range map[string][]string{"skip-dirs": c.SkipDirs, "build-output-dirs": c.BuildOutputDirs} {
+		for _, d := range list {
+			// A bare directory name, matched wherever it appears below the root;
+			// a path or ".." would make the walk skip or reach something else.
+			if d == "" || d == "." || d == ".." || strings.ContainsAny(d, "/\\") {
+				fail("%s: %q must be a directory name, without a path", key, d)
+			}
 		}
 	}
 	for _, name := range slices.Sorted(maps.Keys(c.Toolchains)) {

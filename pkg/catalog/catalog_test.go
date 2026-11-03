@@ -181,6 +181,7 @@ func TestValidation(t *testing.T) {
 		"skip-dir path":       {"skip-dirs: [a/b]\n", "without a path"},
 		"skip-dir parent":     {"skip-dirs: ['..']\n", "without a path"},
 		"skip-dir empty":      {"skip-dirs: ['']\n", "without a path"},
+		"build-output path":   {"build-output-dirs: [out/x]\n", "build-output-dirs"},
 		"workspace kind":      {"toolchains:\n  node: {workspace-kind: '../x'}\n", "aren't allowed"},
 	} {
 		_, err := Default().Overlay([]byte(tc.src))
@@ -198,6 +199,9 @@ func TestSkipDirsAndWorkspaceKinds(t *testing.T) {
 	want := []string{".git", "node_modules", "vendor", ".venv", "venv", "target"}
 	if !slices.Equal(c.SkipDirs, want) {
 		t.Errorf("skip-dirs = %v, want %v", c.SkipDirs, want)
+	}
+	if !slices.Equal(c.BuildOutputDirs, []string{"dist", "build"}) {
+		t.Errorf("build-output-dirs = %v", c.BuildOutputDirs)
 	}
 	kinds := map[string]string{}
 	for name, tc := range c.Toolchains {
