@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Raccoon-CI/raccoonci/internal/azblob"
+	"github.com/Raccoon-CI/lib/internal/azblob"
 )
 
 // putBlob handles the calls @azure/storage-blob makes against the signed

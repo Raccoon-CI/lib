@@ -50,7 +50,7 @@ func TestWireRestsOnlyOnDataPackages(t *testing.T) {
 		got = append(got, p)
 	}
 	slices.Sort(got)
-	want := []string{"github.com/Raccoon-CI/raccoonci/pkg/runevent", "github.com/Raccoon-CI/raccoonci/pkg/value"}
+	want := []string{"github.com/Raccoon-CI/lib/pkg/runevent", "github.com/Raccoon-CI/lib/pkg/value"}
 	if !slices.Equal(got, want) {
 		t.Fatalf("package wire depends on %v; it may depend on %v only (package runner, which runs steps, must not be among them)", got, want)
 	}

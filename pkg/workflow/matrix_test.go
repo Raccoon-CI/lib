@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 func decodeYAML(t *testing.T, src string) any {

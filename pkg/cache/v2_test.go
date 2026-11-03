@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/artifact"
-	"github.com/Raccoon-CI/raccoonci/pkg/blob"
+	"github.com/Raccoon-CI/lib/pkg/artifact"
+	"github.com/Raccoon-CI/lib/pkg/blob"
 )
 
 const sdkPrefix = "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0"

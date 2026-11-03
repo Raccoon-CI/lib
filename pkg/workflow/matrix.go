@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // MaxMatrixJobs is GitHub's limit on jobs one matrix may generate per run.

@@ -32,9 +32,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/internal/azblob"
-	"github.com/Raccoon-CI/raccoonci/pkg/artifact"
-	"github.com/Raccoon-CI/raccoonci/pkg/blob"
+	"github.com/Raccoon-CI/lib/internal/azblob"
+	"github.com/Raccoon-CI/lib/pkg/artifact"
+	"github.com/Raccoon-CI/lib/pkg/blob"
 )
 
 const (

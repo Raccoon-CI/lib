@@ -11,9 +11,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/expr"
-	"github.com/Raccoon-CI/raccoonci/pkg/trigger"
-	"github.com/Raccoon-CI/raccoonci/pkg/workflow"
+	"github.com/Raccoon-CI/lib/pkg/expr"
+	"github.com/Raccoon-CI/lib/pkg/trigger"
+	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
 
 // ConfigPath is where a repository can say what its jobs depend on.

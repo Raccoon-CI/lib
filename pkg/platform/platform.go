@@ -4,8 +4,8 @@
 package platform
 
 import (
-	"github.com/Raccoon-CI/raccoonci/pkg/catalog"
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/catalog"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // FromRunsOn infers the OS an evaluated runs-on value asks for, from the

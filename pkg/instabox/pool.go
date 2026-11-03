@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/dispatch"
+	"github.com/Raccoon-CI/lib/pkg/dispatch"
 )
 
 // agentSlots is how many jobs the agent on a pooled machine can take at once

@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/internal/azblob"
-	"github.com/Raccoon-CI/raccoonci/pkg/blob"
+	"github.com/Raccoon-CI/lib/internal/azblob"
+	"github.com/Raccoon-CI/lib/pkg/blob"
 )
 
 type env struct {

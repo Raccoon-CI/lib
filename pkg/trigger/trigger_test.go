@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/workflow"
+	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
 
 func on(t *testing.T, yaml string) any {

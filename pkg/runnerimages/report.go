@@ -13,7 +13,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/catalog"
+	"github.com/Raccoon-CI/lib/pkg/catalog"
 )
 
 // Defaults is what one runner image release provides.

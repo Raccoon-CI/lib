@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/runevent"
+	"github.com/Raccoon-CI/lib/pkg/runevent"
 )
 
 func TestEventsAndResultSurviveTheRoundTripWhereverTheWritesSplit(t *testing.T) {

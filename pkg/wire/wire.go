@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/runevent"
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/runevent"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // Version is the version of the assignment (InstanceSpec) and of the lines a

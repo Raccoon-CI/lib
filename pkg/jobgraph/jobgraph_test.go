@@ -6,9 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/runevent"
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
-	"github.com/Raccoon-CI/raccoonci/pkg/workflow"
+	"github.com/Raccoon-CI/lib/pkg/runevent"
+	"github.com/Raccoon-CI/lib/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
 
 func TestGraphHandsResolvedInstancesToRemote(t *testing.T) {

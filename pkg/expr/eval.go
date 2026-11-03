@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // Context is what an expression can see.

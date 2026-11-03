@@ -6,7 +6,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/workflow"
+	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
 
 func wf(t *testing.T, jobs string) *workflow.Workflow {

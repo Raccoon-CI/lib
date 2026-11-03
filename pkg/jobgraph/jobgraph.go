@@ -10,12 +10,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/catalog"
-	"github.com/Raccoon-CI/raccoonci/pkg/expr"
-	"github.com/Raccoon-CI/raccoonci/pkg/platform"
-	"github.com/Raccoon-CI/raccoonci/pkg/runevent"
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
-	"github.com/Raccoon-CI/raccoonci/pkg/workflow"
+	"github.com/Raccoon-CI/lib/pkg/catalog"
+	"github.com/Raccoon-CI/lib/pkg/expr"
+	"github.com/Raccoon-CI/lib/pkg/platform"
+	"github.com/Raccoon-CI/lib/pkg/runevent"
+	"github.com/Raccoon-CI/lib/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
 
 // Options is what the graph needs of a run. It rests on data packages only:

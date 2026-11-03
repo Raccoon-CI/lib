@@ -12,7 +12,7 @@ package runevent
 import (
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // Conclusion is how a step or a job ended.

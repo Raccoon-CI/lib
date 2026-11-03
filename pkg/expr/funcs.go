@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 func isStatusFunc(name string) bool {

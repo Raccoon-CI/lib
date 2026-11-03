@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Raccoon-CI/raccoonci/internal/azblob"
-	"github.com/Raccoon-CI/raccoonci/internal/twirp"
-	"github.com/Raccoon-CI/raccoonci/pkg/blob"
+	"github.com/Raccoon-CI/lib/internal/azblob"
+	"github.com/Raccoon-CI/lib/internal/twirp"
+	"github.com/Raccoon-CI/lib/pkg/blob"
 )
 
 // The v2 protocol: the Twirp service github.actions.results.api.v1.CacheService

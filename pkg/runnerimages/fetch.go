@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/catalog"
+	"github.com/Raccoon-CI/lib/pkg/catalog"
 )
 
 // Fetcher finds the image release GitHub has fully deployed and downloads its

@@ -32,7 +32,7 @@ func TestRuneventImportsOnlyDataPackages(t *testing.T) {
 		}
 		for _, imp := range parsed.Imports {
 			path, _ := strconv.Unquote(imp.Path.Value)
-			if strings.HasPrefix(path, "github.com/Raccoon-CI/raccoonci/") && path != "github.com/Raccoon-CI/raccoonci/pkg/value" {
+			if strings.HasPrefix(path, "github.com/Raccoon-CI/raccoonci/") && path != "github.com/Raccoon-CI/lib/pkg/value" {
 				t.Errorf("%s imports %s", f, path)
 			}
 		}

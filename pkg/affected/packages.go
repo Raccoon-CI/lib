@@ -18,7 +18,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/trigger"
+	"github.com/Raccoon-CI/lib/pkg/trigger"
 )
 
 // Package is a unit of the repository that other units can depend on: a Go

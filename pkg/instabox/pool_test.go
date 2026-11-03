@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/dispatch"
+	"github.com/Raccoon-CI/lib/pkg/dispatch"
 )
 
 // multiAPI is an InstaBox that can make many machines. A "machine" reports the

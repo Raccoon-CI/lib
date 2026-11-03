@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/dispatch"
+	"github.com/Raccoon-CI/lib/pkg/dispatch"
 )
 
 // Provider runs jobs on InstaBox machines, one machine per job.

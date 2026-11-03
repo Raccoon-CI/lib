@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/catalog"
+	"github.com/Raccoon-CI/lib/pkg/catalog"
 )
 
 // The snapshot is the fallback for a first start or no network. Refresh it

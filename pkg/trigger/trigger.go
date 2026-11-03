@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Raccoon-CI/raccoonci/pkg/expr"
-	"github.com/Raccoon-CI/raccoonci/pkg/value"
+	"github.com/Raccoon-CI/lib/pkg/expr"
+	"github.com/Raccoon-CI/lib/pkg/value"
 )
 
 // Event is what happened.

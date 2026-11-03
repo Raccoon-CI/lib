@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Raccoon-CI/raccoonci/internal/azblob"
-	"github.com/Raccoon-CI/raccoonci/internal/twirp"
-	"github.com/Raccoon-CI/raccoonci/pkg/blob"
+	"github.com/Raccoon-CI/lib/internal/azblob"
+	"github.com/Raccoon-CI/lib/internal/twirp"
+	"github.com/Raccoon-CI/lib/pkg/blob"
 )
 
 const (
