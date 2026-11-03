@@ -1,0 +1,42 @@
+# Copy to .github/workflows/publish.yml in the Raccoon-CI/catalog repository,
+# with sign.sh at scripts/sign.sh. Needs the Actions secret
+# RACCOONCI_CATALOG_SIGNING_KEY (the private key, see README.md).
+name: sign the catalog
+
+on:
+  push:
+    branches: [main]
+    paths: [catalog.yaml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sign-catalog
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sign catalog.yaml
+        env:
+          RACCOONCI_CATALOG_SIGNING_KEY: ${{ secrets.RACCOONCI_CATALOG_SIGNING_KEY }}
+          # The public key built into Raccoon CI (TrustedKeys in pkg/catalog/keys.go).
+          # The signature is checked against it before it is kept, so a wrong
+          # secret fails here instead of publishing a feed no client accepts.
+          RACCOONCI_CATALOG_PUBLIC_KEY: 8ZQ2Gcx5alGBDloYcmaD6ZI9jtslSdyeiZNbmOUntrs=
+        run: sh scripts/sign.sh catalog.yaml
+      - name: Publish the signature
+        run: |
+          if git diff --quiet -- catalog.yaml.sig && git ls-files --error-unmatch catalog.yaml.sig >/dev/null 2>&1; then
+            echo "the signature is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add catalog.yaml.sig
+          git commit -m "Sign catalog.yaml"
+          git push

@@ -1,0 +1,7 @@
+# The Raccoon CI catalog feed. Raccoon CI pulls this file (and catalog.yaml.sig
+# next to it) and lays it over the catalog built into its binary: an entry with
+# the same name replaces the built-in one, `name: null` removes one, a new name
+# adds one. A catalog only names things; it cannot hold commands or URLs. See
+# pkg/catalog/catalog.yaml in the Raccoon CI repository for the shape, and
+# README.md here for how a change is published.
+schema: 1
