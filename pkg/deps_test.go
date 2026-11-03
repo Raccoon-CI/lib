@@ -5,12 +5,13 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 )
 
-const module = "github.com/Raccoon-CI/raccoonci/"
+const module = "github.com/Raccoon-CI/lib/"
 
 // deps collects the packages of this module that the non-test files of the
 // package in dir (relative to the repository root) import, directly or not, by
@@ -42,12 +43,14 @@ func deps(t *testing.T, dir string, seen map[string]bool) {
 }
 
 // pkg/ is the shared library that the backend, the runner and the command line
-// will build on as separate repositories (TODO D.3, S4). Whatever runs steps,
-// scans, provisions, downloads, schedules or serves must stay outside it: no
-// package under pkg/ may depend on these, directly or not. internal/azblob and
-// internal/twirp are the library's own private helpers and are allowed.
-func TestPkgDoesNotDependOnTheApplicationSide(t *testing.T) {
-	forbidden := []string{"runner", "engine", "actions", "scan", "provision", "nodejs", "docker", "missing", "mirror", "local", "runnercmd", "semver", "affected", "envsnap", "plan", "sched", "ghrunner", "server"}
+// build on as separate repositories (TODO D.3). This repository has no
+// application side left to guard against, so the rule is the other way round:
+// what a package under pkg/ rests on, within this module, is other packages of
+// pkg/ and the library's own private helpers internal/azblob and
+// internal/twirp. Anything else added to this module (a cmd/, another internal/
+// package) must not be pulled into pkg/ by accident.
+func TestPkgRestsOnlyOnPkgAndItsHelpers(t *testing.T) {
+	helpers := []string{"internal/azblob", "internal/twirp"}
 	entries, err := os.ReadDir(".")
 	if err != nil {
 		t.Fatal(err)
@@ -61,11 +64,10 @@ func TestPkgDoesNotDependOnTheApplicationSide(t *testing.T) {
 		seen := map[string]bool{}
 		deps(t, "pkg/"+e.Name(), seen)
 		for p := range seen {
-			for _, bad := range forbidden {
-				if p == "internal/"+bad || strings.HasPrefix(p, "internal/"+bad+"/") {
-					t.Errorf("pkg/%s depends on %s; pkg/ must not rest on internal/%s", e.Name(), p, bad)
-				}
+			if strings.HasPrefix(p, "pkg/") || slices.Contains(helpers, p) {
+				continue
 			}
+			t.Errorf("pkg/%s depends on %s; within this module pkg/ may rest only on pkg/* and %v", e.Name(), p, helpers)
 		}
 	}
 	if checked == 0 {
