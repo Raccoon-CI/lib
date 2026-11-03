@@ -1,5 +1,7 @@
 # Raccoon CI 的 catalog feed
 
+> 这个目录是 **`Raccoon-CI/catalog` 仓库的模板**(放在 lib 里,改动要手工同步到那个仓库)。文件放到那个仓库的根目录,`sign.sh` 放 `scripts/`,`publish.yml` 放 `.github/workflows/`。
+
 Raccoon CI 从这个仓库拉 `catalog.yaml`,并要求 `catalog.yaml.sig` 里的签名能被程序内置的公钥
 (`pkg/catalog/keys.go` 里的 `TrustedKeys`)验过。feed 只是数据:catalog 只"命名"工具、工具链、
 包和镜像,不能放命令或下载地址。

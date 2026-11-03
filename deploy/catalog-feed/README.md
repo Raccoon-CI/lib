@@ -1,5 +1,7 @@
 # The Raccoon CI catalog feed
 
+> This directory is the **template of the `Raccoon-CI/catalog` repository** (kept in lib; changes are copied to that repository by hand). Its files go to the root of that repository, `sign.sh` under `scripts/`, `publish.yml` under `.github/workflows/`.
+
 Raccoon CI pulls `catalog.yaml` from this repository, and requires the signature
 in `catalog.yaml.sig` to verify under the public key built into the program
 (`TrustedKeys` in `pkg/catalog/keys.go`). The feed is data: a catalog only names
@@ -9,7 +11,7 @@ tools, toolchains, packages and images; it cannot contain commands or URLs.
 
 - `catalog.yaml`: the feed. You edit this one.
 - `catalog.yaml.sig`: its ed25519 signature (base64). Made by the workflow; do not edit it.
-- `scripts/sign.sh`, `.github/workflows/publish.yml`: copies of `deploy/catalog-feed/` in the Raccoon CI repository.
+- `scripts/sign.sh`, `.github/workflows/publish.yml`: copies of `deploy/catalog-feed/` in the lib repository.
 
 ## Setting up (once)
 
