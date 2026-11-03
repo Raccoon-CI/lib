@@ -9,9 +9,10 @@ import (
 	"strings"
 )
 
-// DefaultFeedURL is the feed pulled when none is named. Empty means there is
-// no default feed: only a URL given on the command line is pulled.
-const DefaultFeedURL = ""
+// DefaultFeedURL is the feed pulled when none is named (the maintainer's
+// catalog repository; its signature is the file next to it with ".sig" added).
+// If it were empty, only a URL given on the command line would be pulled.
+const DefaultFeedURL = "https://raw.githubusercontent.com/Raccoon-CI/catalog/main/catalog.yaml"
 
 // TrustedKeys are the base64 ed25519 public keys a feed must be signed by when
 // no key is named. Several can be listed, so that a key can be replaced
