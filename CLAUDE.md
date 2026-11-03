@@ -72,6 +72,8 @@ The catalog is layered: built-in, then a feed pulled from `-catalog-url` (cached
   - names with characters that could inject options or paths (`-o…`, `../`)
   - bad regexps and unknown message placeholders
 
+  Knowledge that changes with the ecosystem belongs here, not in a Go list: besides tools and toolchains, `skip-dirs` (directories a scan for a repository's projects does not enter: `node_modules`, `.git`, ...) and a toolchain's `workspace-kind` (`npm`, `cargo`: the kind of workspace its projects form, named as `pkg/affected` names it) are read by the cli's `envsnap`. **Unknown keys are rejected, so a key added to the built-in catalog must not be put in the published feed (Raccoon-CI/catalog) until the binaries that do not know it are gone**; the built-in file is what ships with a binary and is always understood by that binary.
+
   A catalog with a higher `schema` than the code understands is refused as a whole (`ErrNewerSchema`). `TestDefaultIsValid` guards the embedded file. `Source` (`source.go`) pulls a feed:
   - https only, no redirect downgrade
   - size-capped

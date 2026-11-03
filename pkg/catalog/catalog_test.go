@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -177,10 +178,51 @@ func TestValidation(t *testing.T) {
 		"ref-ignore alone":    {"actions:\n  a/b: {setup: node, version-input: v, ref-ignore: x}\n", "needs version-from-ref"},
 		"installer no verbs":  {"installers:\n  yum: {}\n", "needs verbs"},
 		"newer schema":        {"schema: 99\nfuture-key: 1\n", "needs a newer raccoonci"},
+		"skip-dir path":       {"skip-dirs: [a/b]\n", "without a path"},
+		"skip-dir parent":     {"skip-dirs: ['..']\n", "without a path"},
+		"skip-dir empty":      {"skip-dirs: ['']\n", "without a path"},
+		"workspace kind":      {"toolchains:\n  node: {workspace-kind: '../x'}\n", "aren't allowed"},
 	} {
 		_, err := Default().Overlay([]byte(tc.src))
 		if err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Errorf("%s: got %v, want an error containing %q", name, err, tc.want)
 		}
+	}
+}
+
+// What a scan for a repository's projects skips, and which toolchains have
+// workspaces, are knowledge in the catalog, not lists in the code that uses
+// them. The built-in values are the ones that code used to carry.
+func TestSkipDirsAndWorkspaceKinds(t *testing.T) {
+	c := Default()
+	want := []string{".git", "node_modules", "vendor", ".venv", "venv", "target"}
+	if !slices.Equal(c.SkipDirs, want) {
+		t.Errorf("skip-dirs = %v, want %v", c.SkipDirs, want)
+	}
+	kinds := map[string]string{}
+	for name, tc := range c.Toolchains {
+		if tc.WorkspaceKind != "" {
+			kinds[name] = tc.WorkspaceKind
+		}
+	}
+	if len(kinds) != 2 || kinds["node"] != "npm" || kinds["rust"] != "cargo" {
+		t.Errorf("workspace kinds = %v, want node=npm and rust=cargo", kinds)
+	}
+
+	// An overlay replaces the list as a whole, like the other top-level lists,
+	// and can give another toolchain a workspace kind.
+	o, err := c.Overlay([]byte("skip-dirs: [.git, dist]\ntoolchains:\n  go: {workspace-kind: gowork}\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(o.SkipDirs, []string{".git", "dist"}) {
+		t.Errorf("overlaid skip-dirs = %v", o.SkipDirs)
+	}
+	if o.Toolchains["go"].WorkspaceKind != "gowork" {
+		t.Errorf("go workspace kind = %q", o.Toolchains["go"].WorkspaceKind)
+	}
+	// The catalog it was laid over is not changed.
+	if !slices.Equal(c.SkipDirs, want) || c.Toolchains["go"].WorkspaceKind != "" {
+		t.Error("Overlay changed the catalog it started from")
 	}
 }

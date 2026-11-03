@@ -65,6 +65,10 @@ type Catalog struct {
 	VersionFiles          map[string]*VersionFile  `yaml:"version-files"`
 	CompatWarnings        []CompatWarning          `yaml:"compat-warnings"`
 	ImageSoftwareSections []string                 `yaml:"image-software-sections"`
+	// SkipDirs are directory names that hold installed, vendored or VCS data
+	// rather than the project's own sources (node_modules, .git, ...). A walk
+	// that looks for a repository's projects does not enter them.
+	SkipDirs []string `yaml:"skip-dirs"`
 
 	commands map[string]Requirement
 }
@@ -120,10 +124,15 @@ type ToolchainDef struct {
 	// Lockfiles pin the dependencies exactly. When none of them changes the
 	// installed dependencies are the same, which is what lets an environment
 	// snapshot be reused. A toolchain without any cannot be snapshotted.
-	Lockfiles   []string     `yaml:"lockfiles"`
-	Asdf        []string     `yaml:"asdf"`
-	LossyFloats []string     `yaml:"lossy-floats"`
-	Image       *ImageSource `yaml:"image"`
+	Lockfiles []string `yaml:"lockfiles"`
+	// WorkspaceKind names the kind of workspace this toolchain's projects can
+	// form (npm, cargo): several packages in one repository whose dependencies
+	// the root's one lockfile pins. The kind is the name package affected
+	// gives such packages; empty means the toolchain has no workspaces.
+	WorkspaceKind string       `yaml:"workspace-kind"`
+	Asdf          []string     `yaml:"asdf"`
+	LossyFloats   []string     `yaml:"lossy-floats"`
+	Image         *ImageSource `yaml:"image"`
 	// Probe says how to read the version of a copy already installed on the
 	// machine (a provider's template may ship one), so it can be used instead
 	// of downloading another. Without it the toolchain is always downloaded.
@@ -314,6 +323,7 @@ func (c *Catalog) Overlay(src []byte) (*Catalog, error) {
 		CompatWarnings:        pick(c.CompatWarnings, o.CompatWarnings),
 		Opaque:                pick(c.Opaque, o.Opaque),
 		ImageSoftwareSections: pick(c.ImageSoftwareSections, o.ImageSoftwareSections),
+		SkipDirs:              pick(c.SkipDirs, o.SkipDirs),
 	}
 	if o.Platform != (Platform{}) {
 		out.Platform = o.Platform
@@ -438,6 +448,13 @@ func (c *Catalog) validate() error {
 		}
 	}
 
+	for _, d := range c.SkipDirs {
+		// A bare directory name, matched wherever it appears below the root;
+		// a path or ".." would make the walk skip or reach something else.
+		if d == "" || d == "." || d == ".." || strings.ContainsAny(d, "/\\") {
+			fail("skip-dirs: %q must be a directory name, without a path", d)
+		}
+	}
 	for _, name := range slices.Sorted(maps.Keys(c.Toolchains)) {
 		tc := c.Toolchains[name]
 		if tc == nil {
@@ -463,6 +480,9 @@ func (c *Catalog) validate() error {
 			if strings.ContainsAny(f, "/\\") || f == ".." {
 				fail("toolchain %q: manifest %q must be a file name in the repo root", name, f)
 			}
+		}
+		if tc.WorkspaceKind != "" {
+			checkName("workspace kind", tc.WorkspaceKind, identName)
 		}
 		if img := tc.Image; img != nil {
 			d := img.Default

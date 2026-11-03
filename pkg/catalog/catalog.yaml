@@ -78,6 +78,7 @@ toolchains:
     commands: [node, npm, npx, corepack]
     manifests: [package.json]
     lockfiles: [package-lock.json, npm-shrinkwrap.json, yarn.lock, pnpm-lock.yaml, bun.lock, bun.lockb]
+    workspace-kind: npm
     asdf: [nodejs, node]
     probe: {command: node, args: [--version], pattern: '^v(\d+\.\d+\.\d+)'}
     image:
@@ -146,6 +147,7 @@ toolchains:
     commands: [cargo, rustc, rustup, rustfmt]
     manifests: [Cargo.toml]
     lockfiles: [Cargo.lock]
+    workspace-kind: cargo
     asdf: [rust]
     image:
       default: {section: Rust Tools, tool: Rust}
@@ -282,6 +284,11 @@ compat-warnings:
 # Build commands that hide which toolchains they use. When a job runs one,
 # the repo's manifests (go.mod, package.json, ...) decide.
 opaque: [make, just, task, mage, earthly, bash, sh]
+
+# Directories whose contents are installed, vendored or version-control data,
+# not the project's own sources. Looking for a repository's projects (their
+# manifests and lockfiles) does not go into them.
+skip-dirs: [.git, node_modules, vendor, .venv, venv, target]
 
 # What actions mean for a job's needs. Names are lower case, without @ref.
 #   setup: the toolchain it installs, and where it reads the version from
