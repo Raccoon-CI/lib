@@ -29,7 +29,7 @@ func internalDeps(t *testing.T, dir string, seen map[string]bool) {
 		}
 		for _, imp := range parsed.Imports {
 			path, _ := strconv.Unquote(imp.Path.Value)
-			rest, ok := strings.CutPrefix(path, "github.com/Raccoon-CI/raccoonci/")
+			rest, ok := strings.CutPrefix(path, "github.com/Raccoon-CI/lib/")
 			if !ok || seen[path] {
 				continue
 			}
@@ -41,7 +41,7 @@ func internalDeps(t *testing.T, dir string, seen map[string]bool) {
 
 // The protocol between a controller and a machine is shared by the backend, the
 // runner and the command line, which will be separate repositories: it may rest
-// on the data packages and on nothing that runs steps (docs: TODO D.3, S2).
+// on the data packages and on nothing that runs steps (TODO D.3).
 func TestWireRestsOnlyOnDataPackages(t *testing.T) {
 	seen := map[string]bool{}
 	internalDeps(t, ".", seen)
@@ -52,6 +52,6 @@ func TestWireRestsOnlyOnDataPackages(t *testing.T) {
 	slices.Sort(got)
 	want := []string{"github.com/Raccoon-CI/lib/pkg/runevent", "github.com/Raccoon-CI/lib/pkg/value"}
 	if !slices.Equal(got, want) {
-		t.Fatalf("package wire depends on %v; it may depend on %v only (package runner, which runs steps, must not be among them)", got, want)
+		t.Fatalf("package wire depends on %v; it may depend on %v only (nothing that runs steps may be among them)", got, want)
 	}
 }

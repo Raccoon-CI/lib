@@ -29,7 +29,7 @@ func internalDeps(t *testing.T, dir string, seen map[string]bool) {
 		}
 		for _, imp := range parsed.Imports {
 			path, _ := strconv.Unquote(imp.Path.Value)
-			rest, ok := strings.CutPrefix(path, "github.com/Raccoon-CI/raccoonci/")
+			rest, ok := strings.CutPrefix(path, "github.com/Raccoon-CI/lib/")
 			if !ok || seen[path] {
 				continue
 			}
@@ -47,14 +47,14 @@ func TestJobgraphRestsOnlyOnDataPackages(t *testing.T) {
 	internalDeps(t, ".", seen)
 	var got []string
 	for p := range seen {
-		got = append(got, strings.TrimPrefix(p, "github.com/Raccoon-CI/raccoonci/"))
+		got = append(got, strings.TrimPrefix(p, "github.com/Raccoon-CI/lib/"))
 	}
 	slices.Sort(got)
 	t.Log(got)
 	allowed := []string{"pkg/catalog", "pkg/expr", "pkg/platform", "pkg/runevent", "pkg/value", "pkg/workflow"}
 	for _, p := range got {
 		if !slices.Contains(allowed, p) {
-			t.Errorf("package jobgraph depends on %s; it may depend on %v only (not on runner, scan, provision, actions, ...)", p, allowed)
+			t.Errorf("package jobgraph depends on %s; it may depend on %v only", p, allowed)
 		}
 	}
 }
