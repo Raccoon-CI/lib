@@ -1,16 +1,10 @@
 GO ?= go
-VERSION ?= dev
-LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: build runner-binary test race vet check clean runner-images
+.PHONY: build test race vet fmt-check check notices
 
+# A library has no binaries; build only proves everything compiles.
 build:
-	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/ ./cmd/raccoonci ./cmd/raccoonci-runner ./cmd/raccoonci-server
-
-# The binary the InstaBox runner snapshot installs: static, so it runs on any
-# template. Build it with a real VERSION; `raccoonci runner-snapshot` refuses "dev".
-runner-binary:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o dist/raccoonci-linux-amd64 ./cmd/raccoonci
+	$(GO) build ./...
 
 test:
 	$(GO) test ./...
@@ -21,12 +15,12 @@ race:
 vet:
 	$(GO) vet ./...
 
+fmt-check:
+	@test -z "$$(gofmt -l .)" || { gofmt -l .; echo "gofmt needed"; exit 1; }
+
 # Everything that must pass before merging.
-check: vet race
+check: fmt-check vet race
 
-clean:
-	rm -rf dist
-
-# Refresh the embedded snapshot of what GitHub's Ubuntu runner images preinstall (needs network).
-runner-images:
-	$(GO) run ./cmd/raccoonci runner-images update pkg/runnerimages/snapshot
+# Regenerate THIRD_PARTY_NOTICES' inputs (needs go-licenses on PATH).
+notices:
+	go-licenses report ./... --ignore github.com/Raccoon-CI/lib
