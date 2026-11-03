@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"encoding/base64"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -203,5 +204,17 @@ func TestResolveFeed(t *testing.T) {
 	}
 	if _, _, err = ResolveFeed("", "junk"); err == nil {
 		t.Error("a bad key must be an error")
+	}
+}
+
+// Every built-in key must be a usable public key: a typo here would make every
+// feed fail to verify in a release.
+func TestBuiltInTrustedKeysAreValid(t *testing.T) {
+	keys, err := ParsePublicKeys(strings.Join(TrustedKeys, ","))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(keys) != len(TrustedKeys) {
+		t.Fatalf("%d built-in keys parsed to %d", len(TrustedKeys), len(keys))
 	}
 }
