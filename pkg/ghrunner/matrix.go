@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Raccoon-CI/cli/internal/sched"
+	"github.com/Raccoon-CI/lib/pkg/sched"
 	"github.com/Raccoon-CI/lib/pkg/value"
 	"github.com/Raccoon-CI/lib/pkg/workflow"
 )
