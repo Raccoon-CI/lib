@@ -41,9 +41,14 @@ type Source struct {
 	CacheDir string
 	// MaxAge: a cached copy younger than this is used without asking the
 	// network. Zero means DefaultMaxAge.
-	MaxAge    time.Duration
-	PublicKey ed25519.PublicKey
-	Client    *http.Client
+	MaxAge time.Duration
+	// PublicKey and PublicKeys are the keys a signature may come from; when
+	// there are any, an unsigned feed or one signed by another key is refused.
+	// Several keys let a key be replaced without a moment when no feed
+	// verifies: publish with the new one, ship it, retire the old one.
+	PublicKey  ed25519.PublicKey
+	PublicKeys []ed25519.PublicKey
+	Client     *http.Client
 	// AllowInsecure permits http:// URLs, for tests.
 	AllowInsecure bool
 	// Now is the clock, for tests.
@@ -63,6 +68,10 @@ const (
 type Status struct {
 	Origin  Origin
 	Fetched time.Time // when the pulled copy in use was fetched; zero for BuiltIn
+	// Body is the feed text that was verified and applied (nil for BuiltIn),
+	// for a caller that keeps or forwards it: base.Overlay(Body) gives the
+	// same catalog again.
+	Body []byte
 	// Err is why the network refresh didn't happen or didn't apply, when the
 	// catalog in use is older than a refresh would have given.
 	Err error
@@ -87,6 +96,23 @@ func ParsePublicKey(s string) (ed25519.PublicKey, error) {
 	}
 	return ed25519.PublicKey(b), nil
 }
+
+// ParsePublicKeys reads one or more base64 ed25519 public keys separated by
+// commas or white space; an empty string gives none.
+func ParsePublicKeys(s string) ([]ed25519.PublicKey, error) {
+	var keys []ed25519.PublicKey
+	for _, f := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ' ' || r == '\n' || r == '\t' || r == '\r' }) {
+		k, err := ParsePublicKey(f)
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
+// signed says whether feeds must carry a signature.
+func (s *Source) signed() bool { return s.PublicKey != nil || len(s.PublicKeys) > 0 }
 
 func (s *Source) now() time.Time {
 	if s.Now != nil {
@@ -133,19 +159,19 @@ func (s *Source) Load(ctx context.Context, base *Catalog, force bool) (*Catalog,
 	if err := s.check(); err != nil {
 		return base, Status{Origin: BuiltIn, Err: err}
 	}
-	cached, meta := s.readCache(base)
+	cached, cachedBody, meta := s.readCache(base)
 	maxAge := s.MaxAge
 	if maxAge == 0 {
 		maxAge = DefaultMaxAge
 	}
 	if cached != nil && !force && s.now().Sub(meta.Fetched) < maxAge {
-		return cached, Status{Origin: FromCache, Fetched: meta.Fetched}
+		return cached, Status{Origin: FromCache, Fetched: meta.Fetched, Body: cachedBody}
 	}
 
 	// fallback is what to use when the refresh doesn't work out.
 	fallback := func(err error) (*Catalog, Status) {
 		if cached != nil {
-			return cached, Status{Origin: FromCache, Fetched: meta.Fetched, Err: err}
+			return cached, Status{Origin: FromCache, Fetched: meta.Fetched, Err: err, Body: cachedBody}
 		}
 		return base, Status{Origin: BuiltIn, Err: err}
 	}
@@ -158,7 +184,7 @@ func (s *Source) Load(ctx context.Context, base *Catalog, force bool) (*Catalog,
 	if errors.Is(err, errNotModified) && cached != nil {
 		meta.Fetched = s.now()
 		_ = s.writeMeta(meta)
-		return cached, Status{Origin: NotModified, Fetched: meta.Fetched}
+		return cached, Status{Origin: NotModified, Fetched: meta.Fetched, Body: cachedBody}
 	}
 	if err != nil {
 		return fallback(err)
@@ -167,7 +193,7 @@ func (s *Source) Load(ctx context.Context, base *Catalog, force bool) (*Catalog,
 	if err != nil {
 		return fallback(fmt.Errorf("pulled catalog rejected: %w", err))
 	}
-	st := Status{Origin: FromNetwork, Fetched: s.now()}
+	st := Status{Origin: FromNetwork, Fetched: s.now(), Body: body}
 	if err := s.writeCache(body, sig, cacheMeta{ETag: newETag, Fetched: st.Fetched}); err != nil {
 		st.Err = fmt.Errorf("catalog not cached: %w", err)
 	}
@@ -177,12 +203,16 @@ func (s *Source) Load(ctx context.Context, base *Catalog, force bool) (*Catalog,
 // verify checks the signature (if a key is configured) and applies the
 // catalog on top of base.
 func (s *Source) verify(base *Catalog, body, sig []byte) (*Catalog, error) {
-	if s.PublicKey != nil {
+	if s.signed() {
 		raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(sig)))
 		if err != nil || len(raw) != ed25519.SignatureSize {
 			return nil, errors.New("missing or malformed signature")
 		}
-		if !ed25519.Verify(s.PublicKey, body, raw) {
+		ok := s.PublicKey != nil && ed25519.Verify(s.PublicKey, body, raw)
+		for _, k := range s.PublicKeys {
+			ok = ok || ed25519.Verify(k, body, raw)
+		}
+		if !ok {
 			return nil, errors.New("signature doesn't match")
 		}
 	}
@@ -227,7 +257,7 @@ func (s *Source) fetch(ctx context.Context, etag string) (body, sig []byte, newE
 	}
 	newETag = resp.Header.Get("ETag")
 
-	if s.PublicKey != nil {
+	if s.signed() {
 		sresp, err := get(s.URL+".sig", "")
 		if err != nil {
 			return nil, nil, "", err
@@ -243,29 +273,29 @@ func (s *Source) fetch(ctx context.Context, etag string) (body, sig []byte, newE
 	return body, sig, newETag, nil
 }
 
-// readCache returns the cached catalog if it is present and still verifies
-// and validates under the current code and key.
-func (s *Source) readCache(base *Catalog) (*Catalog, cacheMeta) {
+// readCache returns the cached catalog, and the text it was made from, if it
+// is present and still verifies and validates under the current code and keys.
+func (s *Source) readCache(base *Catalog) (*Catalog, []byte, cacheMeta) {
 	var meta cacheMeta
 	mb, err := readCapped(filepath.Join(s.CacheDir, metaFile))
 	if err != nil || json.Unmarshal(mb, &meta) != nil {
-		return nil, meta
+		return nil, nil, meta
 	}
 	body, err := readCapped(filepath.Join(s.CacheDir, bodyFile))
 	if err != nil {
-		return nil, meta
+		return nil, nil, meta
 	}
 	var sig []byte
-	if s.PublicKey != nil {
+	if s.signed() {
 		if sig, err = readCapped(filepath.Join(s.CacheDir, sigFile)); err != nil {
-			return nil, meta
+			return nil, nil, meta
 		}
 	}
 	c, err := s.verify(base, body, sig)
 	if err != nil {
-		return nil, meta
+		return nil, nil, meta
 	}
-	return c, meta
+	return c, body, meta
 }
 
 func readCapped(path string) ([]byte, error) {
