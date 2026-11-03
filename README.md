@@ -31,9 +31,7 @@ make build    # go build ./...
 
 ## Relation to the other repositories
 
-lib <- runner <- cli, and lib <- backend. This repository depends on none of them. `raccoonci-runner` (machine side and local engine), `cli` and `backend` (the server) build on it.
-
-Until `v0.1.0` of this library is tagged, the CI of the other repositories fails (they require that tag); this repository's own CI does not need any tag.
+lib <- runner <- cli, and lib <- backend. This repository depends on none of them. `runner` (machine side and local engine), `cli` and `backend` (the server) build on it. They require tag `v0.1.0` of this module.
 
 ## Licence
 

@@ -32,9 +32,9 @@ go test ./pkg/foo -run TestName -v   # run a single test
 
 Use `GOFLAGS=-p=1` when memory is tight.
 
-## Developing before the tags exist
+## Developing across the repositories
 
-The four repositories sit side by side under `../` with a `go.work` there that uses all four directories and replaces `lib v0.1.0` and `raccoonci-runner v0.1.0` with the local copies. This repository has no sibling dependency, so it builds on its own; `go mod tidy` is fine here. The other repositories need lib `v0.1.0` tagged first. Nothing is pushed or tagged until the user decides names, visibility and pushing.
+`v0.1.0` of this library is published (tag on `main`), and the other repositories require it, so each one builds on its own with a plain `go build ./...`. To try a change to lib in `runner`, `cli` or `backend` before releasing it, put the four checkouts side by side and add a `go.work` next to them with a `use` line for each directory; the workspace then overrides the published version. Do not commit that `go.work`. This repository has no sibling dependency, so `go mod tidy` is fine here. A release is a new tag (`v0.1.x`) on `main`; the other repositories then bump their `require`.
 
 ## Layout and dependency guards
 

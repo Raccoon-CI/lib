@@ -31,9 +31,7 @@ make build    # go build ./...
 
 ## 和其他仓库的关系
 
-lib ← runner ← cli,lib ← backend。本仓库不依赖其中任何一个。`raccoonci-runner`(机器端和本机引擎)、`cli`、`backend`(服务端)都建立在它之上。
-
-库的 `v0.1.0` 打 tag 之前,其他仓库的 CI 会失败(它们依赖这个 tag);本仓库自己的 CI 不需要任何 tag。
+lib ← runner ← cli,lib ← backend。本仓库不依赖其中任何一个。`runner`(机器端和本机引擎)、`cli`、`backend`(服务端)都建立在它之上,它们依赖本模块的 `v0.1.0` 标签。
 
 ## 许可证
 

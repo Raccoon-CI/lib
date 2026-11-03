@@ -56,6 +56,6 @@
 
 ## 5. 发布
 
-- ⬜ 库先发 `v0.1.0`（带 `CHANGELOG`）；runner、backend、cli 的 CI 要等它的 tag 才能过。协议各有自己的版本号，每个仓库独立 semver。
+- ✅ 库已发 `v0.1.0`（2026-11-03），runner、backend、cli 依赖它，三者的 CI 都已通过。⬜ 还缺 `CHANGELOG`。协议各有自己的版本号，每个仓库独立 semver。
 - 坏历史（用户 2026-11-02 定：接受、不改写）：原单体仓库里有一段提交的 `internal/engine/engine.go` 不能编译（后来修好了）。那个文件现在在 runner 仓库，库里没有，所以库的历史不受影响；runner 仓库的 `CLAUDE.md` 写了那段的哈希。
 - 许可证：Apache-2.0（用户 2026-11-02 定）。
